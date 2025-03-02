@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-analysis-deployment
+spec:
+  replicas: 2  # Run 2 instances of the container
+  selector:
+    matchLabels:
+      app: text-analysis
+  template:
+    metadata:
+      labels:
+        app: text-analysis
+    spec:
+      containers:
+        - name: text-analysis
+          image: text_analysis:latest  # <-- Use the correct image name
+          imagePullPolicy: Never  # <-- Prevents Kubernetes from pulling from Docker Hub
+          command: ["python3"]
+          args: ["/home/data/script.py"]
+          volumeMounts:
+            - name: output-volume
+              mountPath: /home/data/output
+          ports:
+            - containerPort: 5000
+      volumes:
+        - name: output-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-analysis-service
+spec:
+  selector:
+    app: text-analysis
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP  # <-- Fixed the service type
+
